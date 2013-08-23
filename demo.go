@@ -10,14 +10,12 @@ import "github.com/nsf/termbox-go"
 type Graphic struct {
 	color termbox.Attribute
 	image rune
-	size int
+	size  int
 }
 
 type coord struct {
 	y, x int
 }
-
-const Ndots = 10
 
 func StatusMsg(m string) {
 	for i, r := range m {
@@ -34,20 +32,13 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	score, mscore := 0, 0
 	sy, sx := termbox.Size()
 	pcolor := termbox.ColorDefault
 
-	dots := make([]coord, Ndots)
-
-	for i := 0; i < Ndots; i++ {
-		y, x := int(rand.Int31n(int32(sy))), int(rand.Int31n(int32(sx-1)))+1
-		termbox.SetCell(y, x, '∙', 0, 0)
-		dots[i] = coord{y, x}
-	}
 
 	my, mx := int(rand.Int31n(int32(sy))), int(rand.Int31n(int32(sx-1)))+1
 	termbox.SetCell(my, mx, 'y', 0, 0)
+	ty, tx := int(rand.Int31n(int32(sy))), int(rand.Int31n(int32(sx-1)))+1
 	dead := false
 
 	y, x := 6, 5
@@ -68,27 +59,18 @@ func main() {
 					StatusMsg("You got  it!")
 				} else if !dead {
 					termbox.SetCell(my, mx, ' ', 0, 0)
-					target := dots[0]
 
-					if target.y < my {
+					if ty < my {
 						my--
-					} else if my < target.y {
+					} else if my < ty {
 						my++
-					} else if target.x < mx {
+					} else if tx < mx {
 						mx--
-					} else if mx < target.x {
+					} else if mx < tx {
 						mx++
 					}
-
-					if termbox.CellBuffer()[mx*sy+my].Ch == '∙' {
-						for i := 0; i < len(dots); i++ {
-							if dots[i].y == my && dots[i].x == mx {
-								dots = append(dots[:i], dots[i+1:]...)
-								StatusMsg("It  got one!")
-								mscore++
-								break
-							}
-						}
+					if my == ty && mx == tx {
+						ty, tx = int(rand.Int31n(int32(sy))), int(rand.Int31n(int32(sx-1)))+1
 					}
 
 					termbox.SetCell(my, mx, 'y', 0, 0)
@@ -134,16 +116,6 @@ func main() {
 			case 'q':
 				return
 			}
-			if termbox.CellBuffer()[x*sy+y].Ch == '∙' {
-				for i := 0; i < len(dots); i++ {
-					if dots[i].y == y && dots[i].x == x {
-						dots = append(dots[:i], dots[i+1:]...)
-						StatusMsg("You got one!")
-						score++
-						break
-					}
-				}
-			}
 			if my == y && mx == x {
 				dead = true
 				StatusMsg("You got  it!")
@@ -152,17 +124,13 @@ func main() {
 			termbox.SetCell(y, x, '@', pcolor, 0)
 		}
 
-		if len(dots) == 0 {
+		if dead {
 			sy, sx = termbox.Size()
 			sx /= 2
 			sy /= 2
 
 			var endmsg string
-			if score > mscore {
-				endmsg = "YOU WIN"
-			} else {
-				endmsg = "MONSTER WINS"
-			}
+			endmsg = "YOU WIN"
 
 			sy -= len(endmsg) / 2
 
